@@ -42,7 +42,7 @@ var buyProduct = function() {
         inquirer.prompt([{
                 name: 'product',
                 type: 'input',
-                message: 'Which productwould you like to buy? (Enter the product ID)'
+                message: 'Which product would you like to buy? (Enter the product ID)'
             },
             {
                 name: 'quantity',
@@ -51,30 +51,20 @@ var buyProduct = function() {
             }
         ]).then(function(answer) {
             console.log(answer);
-            var itemID = answer.item;
-            console.log(itemID);
-            var chosenItem = res[itemID - 1];
-            console.log(chosenItem);
-            var newQuantity = chosenItem.quantity - answer.quantity;
-            if (newQuantity >= 0) {
-                connection.query('UPDATE stock_info SET ? WHERE itemID = ?', [{
-                    quantity: newQuantity
-                }, itemID]);
-                buyProduct();
-            } else {
-                console.log("Oops! Looks like we don't have that many in stock. Please enter a lesser quantity.");
-                buyProduct();
-            }
-        })
-    })
-}
+            connection.query('SELECT quantity FROM stock_info WHERE id =' + answer.product, function(err, res) {
+                console.log(res[0].quantity);
+                var currentQuantity = res[0].quantity;
 
-// connection.query("SELECT * FROM stock_info", function(err, res) {
-//   if (err) throw err;
-//   console.log(res);
-// });
-//
-// connection.query("", function(err, res) {
-//   if (err) throw err;
-//   console.log(res);
-// });
+                if (answer.quantity <= currentQuantity) {
+                    var query = 'UPDATE stock_info SET quantity = ' + (currentQuantity - answer.quantity) + ' WHERE id =' + answer.product;
+                    connection.query(query, function(err, res) {
+                        console.log('Your order is being processed');
+                    })
+                } else {
+                    console.log("Oops! Looks like we don't have that many in stock. Please enter a lesser quantity.");
+                }
+            })
+
+        });
+    });
+}
